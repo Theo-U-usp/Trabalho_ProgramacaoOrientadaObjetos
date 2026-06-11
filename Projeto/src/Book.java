@@ -2,29 +2,29 @@ public class Book{
 
 
 
-    private String nome;
-    private String autor;
+    private String name;
+    private String author;
     private int year;
     private int ISBN;
     private String genre;
     private int copies;
 
 
-    public Book(String nome, String autor, int year, int ISBN, String genre, int copies) {
-        this.nome = nome;
-        this.autor = autor;
+    public Book(String name, String author, int year, int ISBN, String genre, int copies) {
+        this.name = name;
+        this.author = author;
         this.year = year;
         this.ISBN = ISBN;
         this.genre = genre;
         this.copies = copies;
     }
 
-    public String getNome() {
-        return nome;
+    public String getName() {
+        return name;
     }
 
-    public String getAutor() {
-        return autor;
+    public String getAuthor() {
+        return author;
     }
 
     public int getyear() {
@@ -43,23 +43,27 @@ public class Book{
         return copies;
     }
 
-    public void setNome(String nome) {
-        this.nome = nome;
+    public void setName(String name) {
+        this.name = name;
     }
 
-    public void setAutor(String autor) {
-        this.autor = autor;
+    public void setAuthor(String author) {
+        this.author = author;
     }
 
-    public void setNumeroCopias(int copies) {
+    public void setCopies(int copies) {
         this.copies = copies;
     }
     
     public void setISBN(int ISBN) {
         this.ISBN = ISBN;
     }
+    
+    public void setYear(int year) {
+        this.year = year;
+    }
 
-    public void setgenre(String genre) {
+    public void setGenre(String genre) {
         this.genre = genre;
     }
     
