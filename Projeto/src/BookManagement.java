@@ -1,5 +1,4 @@
 import java.util.ArrayList;
-import java.util.Scanner;
 import java.util.Iterator;
 
 public class BookManagement {
@@ -22,59 +21,45 @@ public class BookManagement {
         bookslist.add(book);
 
     }
-    public void Edit(String comand, Book book){
-        Scanner entrada = new Scanner(System.in);
-        
-        switch (comand.toUpperCase()) {
-            case "NAME":
-                System.out.println("Digite o novo nome: ");
-                String name = entrada.next();
-                book.setName(name);
+    public void EditString(Book book, String field, String newValue) {
+
+        switch (field) {
+            case "Name":
+                book.setName(newValue);
                 break;
 
-            case "AUTHOR":
-                System.out.println("Digite o novo autor: ");
-                String author = entrada.next();
-                book.setAuthor(author);
+            case "Author":
+                book.setAuthor(newValue);
                 break;
 
-            case "ISBN":
-                System.out.println("Digite a nova ISBN: ");
-                int ISBN = entrada.nextInt();
-                book.setISBN(ISBN);
-                break;
-            
-            case "YEAR":
-                System.out.println("Digite o novo ano: ");
-                int year = entrada.nextInt();
-                book.setYear(year);
-                break;
-
-            case "GENRE":
-                System.out.println("Digite o novo genero: ");
-                String genre = entrada.next();
-                book.setGenre(genre);
-                break;
-            case "COPIES":
-                System.out.println("Digite o novo numero de copias: ");
-                int copies = entrada.nextInt();
-                book.setCopies(copies);
-                break;
-            
-            default:
-                System.out.println("Opção inválida");
+            case "Genre":
+                book.setGenre(newValue);
                 break;
         }
-        entrada.close();
+    }
+    public void EditInt(Book book, String field, int newValue) {
 
+        switch (field) {
+            case "ISBN":
+                book.setISBN(newValue);
+                break;
+
+            case "Year":
+                book.setYear(newValue);
+                break;
+
+            case "Copies":
+                book.setCopies(newValue);
+                break;
+        }
     }
     public void Delete(ArrayList<Book> bookslist, Book book){
         Iterator<Book> it = bookslist.iterator();
 
         while (it.hasNext()) {
-            Book livro = it.next();
+            Book book2 = it.next();
 
-            if (livro.getName().equalsIgnoreCase(book.getName())) {
+            if (book2.getName().equalsIgnoreCase(book.getName())) {
                 it.remove();
                 break;
             }
@@ -82,101 +67,51 @@ public class BookManagement {
     }
 
 
-    public void Search(String comand, ArrayList<Book> booklist){
-            Scanner entrada = new Scanner(System.in);
-            Iterator<Book> it = booklist.iterator();
-            switch (comand.toUpperCase()) {
-                case "NAME":
-                    System.out.println("Digite o nome: ");
-                    String name = entrada.next();
-                    while (it.hasNext()) {
-                        Book book = it.next();
+    public ArrayList<Book> Search(String command, ArrayList<Book> bookList, String value) {
 
-                        if (book.getName().equalsIgnoreCase(name)) {
-                            book.getName();
-                            book.getAuthor();
-                            book.getyear();
-                            book.getgenre();
-                            book.getcopies();
-                            break;
-                        }
+        ArrayList<Book> result = new ArrayList<>();
+
+        for (Book book : bookList) {
+
+            switch (command.toUpperCase()) {
+
+                case "NAME":
+                    if (book.getName()
+                            .equalsIgnoreCase(value)) {
+                        result.add(book);
                     }
                     break;
 
                 case "AUTHOR":
-                    System.out.println("Digite o novo autor: ");
-                    String author = entrada.next();
-                    while (it.hasNext()) {
-                        Book book = it.next();
-
-                        if (book.getAuthor().equalsIgnoreCase(author)) {
-                            book.getName();
-                            book.getAuthor();
-                            book.getyear();
-                            book.getgenre();
-                            book.getcopies();
-                            
-                        }
+                    if (book.getAuthor()
+                            .equalsIgnoreCase(value)) {
+                        result.add(book);
                     }
                     break;
 
                 case "ISBN":
-                    System.out.println("Digite a nova ISBN: ");
-                    int ISBN = entrada.nextInt();
-                    while (it.hasNext()) {
-                        Book book = it.next();
-
-                        if (book.getISBN()== ISBN) {
-                            book.getName();
-                            book.getAuthor();
-                            book.getyear();
-                            book.getgenre();
-                            book.getcopies();
-                            break;
-                        }
+                    if (book.getISBN()
+                            == Integer.parseInt(value)) {
+                        result.add(book);
                     }
                     break;
-                
-                case "YEAR":
-                    System.out.println("Digite o novo ano: ");
-                    int year = entrada.nextInt();
-                    while (it.hasNext()) {
-                        Book book = it.next();
 
-                        if (book.getyear() == year) {
-                            book.getName();
-                            book.getAuthor();
-                            book.getyear();
-                            book.getgenre();
-                            book.getcopies();
-                        
-                        }
+                case "YEAR":
+                    if (book.getyear()
+                            == Integer.parseInt(value)) {
+                        result.add(book);
                     }
                     break;
 
                 case "GENRE":
-                    System.out.println("Digite o novo genero: ");
-                    String genre = entrada.next();
-                    while (it.hasNext()) {
-                        Book book = it.next();
-
-                        if (book.getgenre().equalsIgnoreCase(genre)) {
-                            book.getName();
-                            book.getAuthor();
-                            book.getyear();
-                            book.getgenre();
-                            book.getcopies();
-                            
-                        }
+                    if (book.getgenre()
+                            .equalsIgnoreCase(value)) {
+                        result.add(book);
                     }
                     break;
-            
-                
-                default:
-                    System.out.println("Opção inválida");
-                    break;
             }
-            entrada.close();
+        }
 
+        return result;
     }
 }

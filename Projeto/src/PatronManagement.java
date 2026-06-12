@@ -1,11 +1,10 @@
 import java.util.ArrayList;
-import java.util.Scanner;
 import java.util.Iterator;
 
 
 
 public class PatronManagement {
-    public void Add(ArrayList<Patron> patronlist, Patron patron){
+    public void AddPatron(ArrayList<Patron> patronlist, Patron patron){
         Iterator<Patron> it = patronlist.iterator();
 
         while (it.hasNext()) {
@@ -17,28 +16,26 @@ public class PatronManagement {
         }
         patronlist.add(patron);
     }
-    public void Edit(String comand, Patron patron){
-        Scanner entrada = new Scanner(System.in);
-        
-        switch (comand.toUpperCase()) {
-            case "NAME":
-                System.out.println("Digite o novo nome: ");
-                String name = entrada.next();
-                patron.setName(name);
+    public void EditString(Patron patron, String field, String newValue) {
+
+        switch (field) {
+            case "Name":
+                patron.setName(newValue);
                 break;
 
-            case "ID":
-                System.out.println("Digite o novo ID: ");
-                int ID = entrada.nextInt();
-                patron.setID(ID);
-                break;
-            
-            default:
-                System.out.println("Opção inválida");
+            case "Contact":
+                patron.setContact(newValue);
                 break;
         }
-        entrada.close();
+    }
+    public void EditInt(Patron patron, String field, int newValue) {
 
+        switch (field) {
+            case "ID":
+                patron.setID(newValue);
+                break;
+
+        }
     }
     public void Delete(ArrayList<Patron> patronlist, Patron patron){
         Iterator<Patron> it = patronlist.iterator();
@@ -54,47 +51,31 @@ public class PatronManagement {
     }
 
 
-    public void Search(String comand, ArrayList<Patron> patronlist){
-        Scanner entrada = new Scanner(System.in);
-        Iterator<Patron> it = patronlist.iterator();
-        switch (comand.toUpperCase()) {
-            case "NAME":
-                System.out.println("Digite o nome: ");
-                String name = entrada.next();
-                while (it.hasNext()) {
-                    Patron patron = it.next();
+    public ArrayList<Patron> Search(String command, ArrayList<Patron> patronList, String value) {
 
-                    if (patron.getName().equalsIgnoreCase(name)) {
-                        patron.getName();
-                        patron.getID();
-                        patron.getContact();
-                        patron.booksHistoric();
-                        break;
+        ArrayList<Patron> result = new ArrayList<>();
+
+        for (Patron patron : patronList) {
+
+            switch (command.toUpperCase()) {
+
+                case "NAME":
+                    if (patron.getName()
+                            .equalsIgnoreCase(value)) {
+                        result.add(patron);
                     }
-                }   
-                break;
+                    break;
 
-            case "ID":
-                System.out.println("Digite o ID: ");
-                int ID = entrada.nextInt();
-                while (it.hasNext()) {
-                    Patron patron = it.next();
 
-                    if (patron.getID() == ID) {
-                        patron.getName();
-                        patron.getID();
-                        patron.getContact();
-                        patron.booksHistoric();
-                        break;
+                case "ID":
+                    if (patron.getID()
+                            == Integer.parseInt(value)) {
+                        result.add(patron);
                     }
-                }
-                break;
-                
-            default:
-                System.out.println("Opção inválida");
-                break;
-                
-        }      
-        entrada.close();      
+                    break;
+            }
+        }
+
+        return result;
     }
 }

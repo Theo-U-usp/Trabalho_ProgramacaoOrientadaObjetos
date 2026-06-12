@@ -26,6 +26,9 @@ public class Patron{
     public String getContact() {
         return contact;
     }
+    public ArrayList<Book> getBorrowedBooks() {
+        return BorrowedBooks;
+    }
     public void setName(String name){
           this.name = name;  
 
@@ -36,6 +39,10 @@ public class Patron{
     }
     public void setContact(String contact){
           this.contact = contact;  
+
+    }
+    public void setBorrowedBooks(ArrayList<Book> BorrowedBooks){
+          this.BorrowedBooks = BorrowedBooks;  
 
     }
 

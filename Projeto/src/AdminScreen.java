@@ -1,10 +1,6 @@
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.Dimension;
-import javax.swing.JTable;
-import javax.swing.JScrollPane;
-import javax.swing.JOptionPane;
-
 import java.util.ArrayList;
 import java.awt.BorderLayout;
 
@@ -152,6 +148,16 @@ public class AdminScreen extends JFrame {
                     ISBN = Integer.parseInt(
                         JOptionPane.showInputDialog("ISBN:")
                     );
+                    if (bookManagement.isbnExists(booklist, ISBN)) {
+
+                        JOptionPane.showMessageDialog(
+                                this,
+                                "ISBN already exists."
+                        );
+
+                        continue;
+                    }
+
                     break;
                 } catch (NumberFormatException er) {
                     JOptionPane.showMessageDialog(
@@ -237,7 +243,7 @@ public class AdminScreen extends JFrame {
         });
 
         editButton.addActionListener(e -> {
-
+            System.out.println("Edit button clicked");
             int selectedrow = booksTable.getSelectedRow();
 
             if (selectedrow == -1) {
@@ -245,7 +251,7 @@ public class AdminScreen extends JFrame {
                 return;
             }
 
-            Book selectedBook = booklist.get(row);
+            Book selectedBook = booklist.get(selectedrow);
 
             String[] options = {
                 "Name",
@@ -291,6 +297,19 @@ public class AdminScreen extends JFrame {
                                     "New " + choice + ":"
                             )
                     );
+                    if (choice.equals("ISBN")) {
+
+                        if (bookManagement.isbnExists(booklist, newValue)
+                                && newValue != selectedBook.getISBN()) {
+
+                            JOptionPane.showMessageDialog(
+                                    this,
+                                    "ISBN already exists."
+                            );
+
+                            return;
+                        }
+                    }
 
                     if (choice.equals("Year") && newValue > 2026) {
                         JOptionPane.showMessageDialog(
@@ -430,7 +449,7 @@ public class AdminScreen extends JFrame {
         }
         
         JScrollPane scrollPanepatron = new JScrollPane(patronsTable);
-        booksPanel.add(scrollPanepatron, BorderLayout.CENTER);
+        patronsPanel.add(scrollPanepatron, BorderLayout.CENTER);
 
         JPanel optionsPanelpatron = new JPanel();
 
@@ -460,6 +479,17 @@ public class AdminScreen extends JFrame {
                     ID = Integer.parseInt(
                         JOptionPane.showInputDialog("ID:")
                     );
+                    if (patronManagement.idExists(
+                            patronlist,
+                            ID)) {
+
+                        JOptionPane.showMessageDialog(
+                                this,
+                                "ID already exists."
+                        );
+
+                        continue;
+                    }
                     break;
                 } catch (NumberFormatException er) {
                     JOptionPane.showMessageDialog(
@@ -510,53 +540,53 @@ public class AdminScreen extends JFrame {
             }
             Patron selectedpatron = patronlist.get(selectedRowPatron);
             patronManagement.Delete(patronlist, selectedpatron);
-            tableModel.removeRow(selectedRowPatron);
+            tableModelpatron.removeRow(selectedRowPatron);
             refreshTablePatron();
         });
 
         editButtonPatron.addActionListener(e -> {
 
-            int selectedrow = patronsTable.getSelectedRow();
+            int selectedrowPatron = patronsTable.getSelectedRow();
 
-            if (selectedrow == -1) {
+            if (selectedrowPatron == -1) {
                 JOptionPane.showMessageDialog(this, "Select a patron first.");
                 return;
             }
 
-            Patron selectedpatron = patronlist.get(row);
+            Patron selectedpatron = patronlist.get(selectedrowPatron);
 
-            String[] options = {
+            String[] optionspatron = {
                 "Name",
                 "ID",
                 "Contact",
             };
 
-            String choice = (String) JOptionPane.showInputDialog(
+            String choicepatron = (String) JOptionPane.showInputDialog(
                     this,
                     "Select what you want to edit:",
-                    "Edit Book",
+                    "Edit Patron",
                     JOptionPane.QUESTION_MESSAGE,
                     null,
-                    options,
-                    options[0]
+                    optionspatron,
+                    optionspatron[0]
             );
 
-            if (choice == null) {
+            if (choicepatron == null) {
                 return;
             }
 
-            if (choice.equals("Name")|| choice.equals("Contact")){
+            if (choicepatron.equals("Name")|| choicepatron.equals("Contact")){
 
-                String newValue = JOptionPane.showInputDialog(
+                String newValuepatron = JOptionPane.showInputDialog(
                         this,
-                        "New " + choice + ":"
+                        "New " + choicepatron + ":"
                 );
-                if(choice.equals("Contact")){
+                if(choicepatron.equals("Contact")){
                 
 
                     while (true) {
 
-                        if (isValidEmail(newValue)) {
+                        if (isValidEmail(newValuepatron)) {
                             break;
                         }
 
@@ -565,35 +595,49 @@ public class AdminScreen extends JFrame {
                                 "Invalid email format."
                         );
 
-                        newValue = JOptionPane.showInputDialog(
+                        newValuepatron = JOptionPane.showInputDialog(
                                 this,
-                                "New " + choice + ":"
+                                "New " + choicepatron + ":"
                         );
                     }
 
                 }
 
-                if (newValue != null && !newValue.isEmpty()) {
-                    patronManagement.EditString(selectedpatron, choice, newValue);
+                if (newValuepatron != null && !newValuepatron.isEmpty()) {
+                    patronManagement.EditString(selectedpatron, choicepatron, newValuepatron);
                 }
 
             } else {
                 try {
-                    int newValue = Integer.parseInt(
+
+                    
+                    int newValuepatron = Integer.parseInt(
                             JOptionPane.showInputDialog(
                                     this,
-                                    "New " + choice + ":"
+                                    "New " + choicepatron + ":"
                             )
                     );
+                    if (patronManagement.idExists(
+                            patronlist,
+                            newValuepatron)
+                            && newValuepatron != selectedpatron.getID()) {
+
+                        JOptionPane.showMessageDialog(
+                                this,
+                                "ID already exists."
+                        );
+
+                        return;
+                    }
 
                 
 
-                    patronManagement.EditInt(selectedpatron, choice, newValue);
+                    patronManagement.EditInt(selectedpatron, choicepatron, newValuepatron);
 
                 } catch (NumberFormatException ex) {
                     JOptionPane.showMessageDialog(
                             this,
-                            choice + " must be an integer."
+                            choicepatron + " must be an integer."
                     );
                 }
             }
