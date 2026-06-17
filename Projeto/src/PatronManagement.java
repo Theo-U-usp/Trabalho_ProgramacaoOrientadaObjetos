@@ -78,4 +78,14 @@ public class PatronManagement {
 
         return result;
     }
+    public boolean idExists(ArrayList<Patron> patronList, int id) {
+
+        for (Patron patron : patronList) {
+            if (patron.getID() == id) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 }

@@ -114,4 +114,14 @@ public class BookManagement {
 
         return result;
     }
+    public boolean isbnExists(ArrayList<Book> bookList, int isbn) {
+
+        for (Book book : bookList) {
+            if (book.getISBN() == isbn) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 }

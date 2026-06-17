@@ -7,12 +7,19 @@ public class Patron{
     private int ID;
     private String contact;
     private ArrayList<Book> BorrowedBooks;
+    private int havebook;
+    private float totalFine;
+    private ArrayList<Loan> history;
 
-    public Patron(String name, int ID, String contact,  ArrayList<Book> BorrowedBooks) {
+    public Patron(String name, int ID, String contact,  ArrayList<Book> BorrowedBooks,
+         int havebook, float totalFine, ArrayList<Loan> history) {
         this.name = name;
         this.ID = ID;
         this.contact = contact;
         this.BorrowedBooks = BorrowedBooks;
+        this.havebook = havebook;
+        this.totalFine = totalFine;
+        this.history = new ArrayList<>();
         
     }
 
@@ -29,6 +36,16 @@ public class Patron{
     public ArrayList<Book> getBorrowedBooks() {
         return BorrowedBooks;
     }
+    public int getHaveBook() {
+        return havebook;
+    }
+    public float getTotalFine() {
+        return totalFine;
+    }
+    public ArrayList<Loan> getHistory() {
+        return history;
+    }
+
     public void setName(String name){
           this.name = name;  
 
@@ -44,6 +61,22 @@ public class Patron{
     public void setBorrowedBooks(ArrayList<Book> BorrowedBooks){
           this.BorrowedBooks = BorrowedBooks;  
 
+    }
+    public void setHaveBook(float totalFine){
+        this.totalFine = totalFine;
+
+    }
+
+    public void setTotalFine(float totalFine){
+        this.totalFine = totalFine;
+
+    }
+    public void setHistory(ArrayList<Loan> history) {
+        this.history = history;
+    }
+
+    public void addLoanToHistory(Loan loan) {
+        history.add(loan);
     }
 
     public void pegarLivro(Book book) {

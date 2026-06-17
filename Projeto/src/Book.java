@@ -71,13 +71,6 @@ public class Book{
         copies += quant;
     }
 
-    public void removecopies(int quant) {
-        if (quant > 0 && quant <= copies) {
-            copies -= quant;
-        } else {
-            System.out.println("Quantidade inválida.");
-        }
-    }
 
 
 }
