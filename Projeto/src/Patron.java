@@ -1,6 +1,7 @@
+import java.io.Serializable;
 import java.util.ArrayList;
 
-public class Patron{
+public class Patron implements Serializable{
 
 
     private String name;
@@ -62,8 +63,8 @@ public class Patron{
           this.BorrowedBooks = BorrowedBooks;  
 
     }
-    public void setHaveBook(float totalFine){
-        this.totalFine = totalFine;
+    public void setHaveBook(int havebook){
+        this.havebook = havebook;
 
     }
 
@@ -91,6 +92,8 @@ public class Patron{
         }
     }
 
-
+    public String toString() {
+        return getName() + " (ID: " + getID() + ")";
+    }
     
 }

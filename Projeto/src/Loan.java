@@ -1,6 +1,7 @@
+import java.io.Serializable;
 import java.time.LocalDate;
 
-public class Loan {
+public class Loan implements Serializable{
     private Book book;
     private LocalDate checkOutdate;
     private LocalDate dueDate;

@@ -5,11 +5,21 @@
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.Dimension;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.FileNotFoundException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.awt.BorderLayout;
+import java.awt.FlowLayout;
+import java.awt.GridLayout;
+import java.awt.Font;
 
 public class AdminScreen extends JFrame {
+    
+    private static final String DATA_FILE = "library.dat";
     private JTextField searchField;
     private JRadioButton nameButton;
     private JRadioButton authorButton;
@@ -69,6 +79,85 @@ public class AdminScreen extends JFrame {
             });
         }
     }
+    private void saveData() {
+        try {
+            LibraryData data = new LibraryData(
+                    booklist,
+                    patronlist,
+                    loanList
+            );
+
+            ObjectOutputStream output =
+                    new ObjectOutputStream(
+                            new FileOutputStream(DATA_FILE)
+                    );
+
+            output.writeObject(data);
+            output.close();
+
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(
+                this,
+                "Error saving library data.",
+                "Save Error",
+                JOptionPane.ERROR_MESSAGE
+            );
+        }
+    }
+
+    private void loadData() {
+        try {
+            ObjectInputStream input =
+                    new ObjectInputStream(
+                            new FileInputStream(DATA_FILE)
+                    );
+
+            LibraryData data = (LibraryData) input.readObject();
+
+            input.close();
+
+            booklist.clear();
+            booklist.addAll(data.books);
+
+            patronlist.clear();
+            patronlist.addAll(data.patrons);
+
+            loanList.clear();
+            loanList.addAll(data.loans);
+
+            refreshTable();
+            refreshTablePatron();
+
+        } catch (FileNotFoundException e) {
+            // First execution: there is no saved file yet.
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(
+                this,
+                "Error loading library data.",
+                "Load Error",
+                JOptionPane.ERROR_MESSAGE
+            );
+        }
+    }
+
+    private void configureTable(JTable table) {
+        table.setRowHeight(28);
+        table.setFillsViewportHeight(true);
+        table.getTableHeader().setReorderingAllowed(false);
+        table.getTableHeader().setFont(new Font("SansSerif", Font.BOLD, 13));
+    }
+
+    private JPanel createSidePanel(String title) {
+        JPanel panel = new JPanel(new GridLayout(0, 1, 10, 10));
+        panel.setBorder(BorderFactory.createTitledBorder(title));
+        return panel;
+    }
+
+    private JPanel createSearchPanel(String title) {
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 8));
+        panel.setBorder(BorderFactory.createTitledBorder(title));
+        return panel;
+    }
 
     public boolean isValidEmail(String email) {
         if (email == null) {
@@ -80,17 +169,64 @@ public class AdminScreen extends JFrame {
         );
     }
 
+    private boolean isEmptyInput(String value) {
+        return value == null || value.trim().isEmpty();
+    }
+
+    private boolean confirmDelete(String message) {
+        int answer = JOptionPane.showConfirmDialog(
+            this,
+            message,
+            "Confirm Delete",
+            JOptionPane.YES_NO_OPTION
+        );
+
+        return answer == JOptionPane.YES_OPTION;
+    }
+
     public AdminScreen() {
-        setTitle(" Java Library");
-        setSize(1500, 1000);
+        setTitle("Java Library");
+        setSize(1200, 750);
+        setMinimumSize(new Dimension(1000, 650));
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
+        JMenuBar menuBar = new JMenuBar();
+
+        JMenu accountMenu = new JMenu("Account");
+
+        JMenuItem logoutItem = new JMenuItem("Logout");
+
+        logoutItem.addActionListener(e -> {
+
+            int option = JOptionPane.showConfirmDialog(
+                    this,
+                    "Do you want to logout?",
+                    "Logout",
+                    JOptionPane.YES_NO_OPTION
+            );
+
+            if (option == JOptionPane.YES_OPTION) {
+                new LoginScreen().setVisible(true);
+                dispose();
+            }
+        });
+
+        accountMenu.add(logoutItem);
+        menuBar.add(accountMenu);
+
+        setJMenuBar(menuBar);
+
         JTabbedPane tabs = new JTabbedPane();
 
-        JPanel booksPanel = new JPanel(new BorderLayout());
-        JPanel patronsPanel = new JPanel(new BorderLayout());
-        JPanel loansPanel = new JPanel();
+        JPanel booksPanel = new JPanel(new BorderLayout(10, 10));
+        booksPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+
+        JPanel patronsPanel = new JPanel(new BorderLayout(10, 10));
+        patronsPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+
+        JPanel loansPanel = new JPanel(new BorderLayout(10, 10));
+        loansPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
 
         tabs.addTab("Books", booksPanel);
         tabs.addTab("Patrons", patronsPanel);
@@ -106,12 +242,13 @@ public class AdminScreen extends JFrame {
         // =========================
 
         JTable booksTable = new JTable(tableModel);
+        configureTable(booksTable);
         booksTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
         JScrollPane scrollPane = new JScrollPane(booksTable);
         booksPanel.add(scrollPane, BorderLayout.CENTER);
 
-        JPanel optionsPanel = new JPanel();
+        JPanel optionsPanel = createSidePanel("Book Options");
 
         addButton = new JButton("Add");
         editButton = new JButton("Edit");
@@ -128,9 +265,17 @@ public class AdminScreen extends JFrame {
             if (name == null) {
                 return;
             }
+            if (isEmptyInput(name)) {
+                JOptionPane.showMessageDialog(this, "Book name cannot be empty.");
+                return;
+            }
 
             String author = JOptionPane.showInputDialog(this, "Author:");
             if (author == null) {
+                return;
+            }
+            if (isEmptyInput(author)) {
+                JOptionPane.showMessageDialog(this, "Author cannot be empty.");
                 return;
             }
 
@@ -163,6 +308,11 @@ public class AdminScreen extends JFrame {
                 try {
                     ISBN = Integer.parseInt(input);
 
+                    if (ISBN <= 0) {
+                        JOptionPane.showMessageDialog(this, "ISBN must be positive.");
+                        continue;
+                    }
+
                     if (bookManagement.isbnExists(booklist, ISBN)) {
                         JOptionPane.showMessageDialog(this, "ISBN already exists.");
                         continue;
@@ -182,6 +332,11 @@ public class AdminScreen extends JFrame {
 
                 try {
                     year = Integer.parseInt(input);
+
+                    if (year <= 0) {
+                        JOptionPane.showMessageDialog(this, "Year must be positive.");
+                        continue;
+                    }
 
                     if (year > 2026) {
                         JOptionPane.showMessageDialog(this, "Year must be less than or equal to 2026.");
@@ -216,6 +371,12 @@ public class AdminScreen extends JFrame {
 
                 try {
                     copies = Integer.parseInt(input);
+
+                    if (copies < 0) {
+                        JOptionPane.showMessageDialog(this, "Copies cannot be negative.");
+                        continue;
+                    }
+
                     break;
                 } catch (NumberFormatException er) {
                     JOptionPane.showMessageDialog(this, "Copies must be an integer.");
@@ -226,6 +387,7 @@ public class AdminScreen extends JFrame {
 
             bookManagement.AddBook(booklist, book);
             refreshTable();
+            saveData();
         });
 
         deleteButton.addActionListener(e -> {
@@ -237,9 +399,24 @@ public class AdminScreen extends JFrame {
             }
 
             Book selectedbook = booklist.get(selectedRow);
+
+            if (!confirmDelete("Are you sure you want to delete this book?")) {
+                return;
+            }
+
+            for (Loan loan : loanList) {
+                if (loan.getBook() == selectedbook) {
+                    JOptionPane.showMessageDialog(
+                            this,
+                            "This book cannot be deleted because it has an active loan."
+                    );
+                    return;
+                }
+            }
             bookManagement.Delete(booklist, selectedbook);
 
             refreshTable();
+            saveData();
         });
 
         editButton.addActionListener(e -> {
@@ -282,9 +459,12 @@ public class AdminScreen extends JFrame {
                     return;
                 }
 
-                if (!newValue.isEmpty()) {
-                    bookManagement.EditString(selectedBook, choice, newValue);
+                if (isEmptyInput(newValue)) {
+                    JOptionPane.showMessageDialog(this, choice + " cannot be empty.");
+                    return;
                 }
+
+                bookManagement.EditString(selectedBook, choice, newValue);
             } else {
                 while (true) {
                     String input = JOptionPane.showInputDialog(this, "New " + choice + ":");
@@ -297,6 +477,11 @@ public class AdminScreen extends JFrame {
                         int newValue = Integer.parseInt(input);
 
                         if (choice.equals("ISBN")) {
+                            if (newValue <= 0) {
+                                JOptionPane.showMessageDialog(this, "ISBN must be positive.");
+                                continue;
+                            }
+
                             if (bookManagement.isbnExists(booklist, newValue)
                                     && newValue != selectedBook.getISBN()) {
                                 JOptionPane.showMessageDialog(this, "ISBN already exists.");
@@ -304,8 +489,18 @@ public class AdminScreen extends JFrame {
                             }
                         }
 
+                        if (choice.equals("Year") && newValue <= 0) {
+                            JOptionPane.showMessageDialog(this, "Year must be positive.");
+                            continue;
+                        }
+
                         if (choice.equals("Year") && newValue > 2026) {
                             JOptionPane.showMessageDialog(this, "Year must be less than or equal to 2026.");
+                            continue;
+                        }
+
+                        if (choice.equals("Copies") && newValue < 0) {
+                            JOptionPane.showMessageDialog(this, "Copies cannot be negative.");
                             continue;
                         }
 
@@ -319,9 +514,10 @@ public class AdminScreen extends JFrame {
             }
 
             refreshTable();
+            saveData();
         });
 
-        JPanel searchPanel = new JPanel();
+        JPanel searchPanel = createSearchPanel("Search Books");
 
         nameButton = new JRadioButton("Name");
         authorButton = new JRadioButton("Author");
@@ -370,6 +566,30 @@ public class AdminScreen extends JFrame {
 
             String value = searchField.getText();
 
+            if (isEmptyInput(value)) {
+                JOptionPane.showMessageDialog(
+                    this,
+                    "Search field cannot be empty.",
+                    "Search Error",
+                    JOptionPane.ERROR_MESSAGE
+                );
+                return;
+            }
+
+            if (ISBNButton.isSelected() || yearButton.isSelected()) {
+                try {
+                    Integer.parseInt(value);
+                } catch (NumberFormatException ex) {
+                    JOptionPane.showMessageDialog(
+                        this,
+                        "Search value must be an integer.",
+                        "Search Error",
+                        JOptionPane.ERROR_MESSAGE
+                    );
+                    return;
+                }
+            }
+
             ArrayList<Book> result = bookManagement.Search(command, booklist, value);
 
             if (result.isEmpty()) {
@@ -406,12 +626,13 @@ public class AdminScreen extends JFrame {
         // =========================
 
         JTable patronsTable = new JTable(tableModelpatron);
+        configureTable(patronsTable);
         patronsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
         JScrollPane scrollPanepatron = new JScrollPane(patronsTable);
         patronsPanel.add(scrollPanepatron, BorderLayout.CENTER);
 
-        JPanel optionsPanelpatron = new JPanel();
+        JPanel optionsPanelpatron = createSidePanel("Patron Options");
 
         addButtonPatron = new JButton("Add");
         editButtonPatron = new JButton("Edit");
@@ -430,6 +651,10 @@ public class AdminScreen extends JFrame {
             if (name == null) {
                 return;
             }
+            if (isEmptyInput(name)) {
+                JOptionPane.showMessageDialog(this, "Patron name cannot be empty.");
+                return;
+            }
 
             int ID;
             String contact;
@@ -445,6 +670,11 @@ public class AdminScreen extends JFrame {
 
                 try {
                     ID = Integer.parseInt(input);
+
+                    if (ID <= 0) {
+                        JOptionPane.showMessageDialog(this, "ID must be positive.");
+                        continue;
+                    }
 
                     if (patronManagement.idExists(patronlist, ID)) {
                         JOptionPane.showMessageDialog(this, "ID already exists.");
@@ -464,6 +694,11 @@ public class AdminScreen extends JFrame {
                     return;
                 }
 
+                if (isEmptyInput(contact)) {
+                    JOptionPane.showMessageDialog(this, "Contact cannot be empty.");
+                    continue;
+                }
+
                 if (isValidEmail(contact)) {
                     break;
                 }
@@ -477,6 +712,7 @@ public class AdminScreen extends JFrame {
             patronManagement.AddPatron(patronlist, patron);
 
             refreshTablePatron();
+            saveData();
         });
 
         deleteButtonPatron.addActionListener(e -> {
@@ -488,9 +724,25 @@ public class AdminScreen extends JFrame {
             }
 
             Patron selectedpatron = patronlist.get(selectedRowPatron);
+
+            if (!confirmDelete("Are you sure you want to delete this patron?")) {
+                return;
+            }
+
+            if (selectedpatron.getHaveBook() == 1 ||
+                !selectedpatron.getBorrowedBooks().isEmpty()) {
+
+                JOptionPane.showMessageDialog(
+                        this,
+                        "This patron cannot be deleted because they have an active loan."
+                );
+
+                return;
+            }
             patronManagement.Delete(patronlist, selectedpatron);
 
             refreshTablePatron();
+            saveData();
         });
 
         editButtonPatron.addActionListener(e -> {
@@ -547,9 +799,12 @@ public class AdminScreen extends JFrame {
                     }
                 }
 
-                if (!newValuepatron.isEmpty()) {
-                    patronManagement.EditString(selectedpatron, choicepatron, newValuepatron);
+                if (isEmptyInput(newValuepatron)) {
+                    JOptionPane.showMessageDialog(this, choicepatron + " cannot be empty.");
+                    return;
                 }
+
+                patronManagement.EditString(selectedpatron, choicepatron, newValuepatron);
 
             } else if (choicepatron.equals("ID")) {
                 while (true) {
@@ -561,6 +816,11 @@ public class AdminScreen extends JFrame {
 
                     try {
                         int newValuepatron = Integer.parseInt(input);
+
+                        if (newValuepatron <= 0) {
+                            JOptionPane.showMessageDialog(this, "ID must be positive.");
+                            continue;
+                        }
 
                         if (patronManagement.idExists(patronlist, newValuepatron)
                                 && newValuepatron != selectedpatron.getID()) {
@@ -586,6 +846,12 @@ public class AdminScreen extends JFrame {
 
                     try {
                         float newFine = Float.parseFloat(input);
+
+                        if (newFine < 0) {
+                            JOptionPane.showMessageDialog(this, "Total Fine cannot be negative.");
+                            continue;
+                        }
+
                         selectedpatron.setTotalFine(newFine);
                         break;
                     } catch (NumberFormatException ex) {
@@ -595,6 +861,7 @@ public class AdminScreen extends JFrame {
             }
 
             refreshTablePatron();
+            saveData();
         });
 
         historyButtonPatron.addActionListener(e -> {
@@ -648,7 +915,7 @@ public class AdminScreen extends JFrame {
             );
         });
 
-        JPanel searchPanelPatron = new JPanel();
+        JPanel searchPanelPatron = createSearchPanel("Search Patrons");
 
         nameButtonPatron = new JRadioButton("Name");
         IDButtonPatron = new JRadioButton("ID");
@@ -681,6 +948,30 @@ public class AdminScreen extends JFrame {
             }
 
             String value = searchFieldPatron.getText();
+
+            if (isEmptyInput(value)) {
+                JOptionPane.showMessageDialog(
+                    this,
+                    "Search field cannot be empty.",
+                    "Search Error",
+                    JOptionPane.ERROR_MESSAGE
+                );
+                return;
+            }
+
+            if (IDButtonPatron.isSelected()) {
+                try {
+                    Integer.parseInt(value);
+                } catch (NumberFormatException ex) {
+                    JOptionPane.showMessageDialog(
+                        this,
+                        "ID must be an integer.",
+                        "Search Error",
+                        JOptionPane.ERROR_MESSAGE
+                    );
+                    return;
+                }
+            }
 
             ArrayList<Patron> result = patronManagement.Search(command, patronlist, value);
 
@@ -778,6 +1069,7 @@ public class AdminScreen extends JFrame {
 
             refreshTable();
             refreshTablePatron();
+            saveData();
         });
 
         checkinButton.addActionListener(e -> {
@@ -812,17 +1104,18 @@ public class AdminScreen extends JFrame {
 
             Book borrowedBook = selectedPatron.getBorrowedBooks().get(0);
 
-            String typedName = JOptionPane.showInputDialog(
-                this,
-                "Confirm borrowed book name:"
+            int confirm = JOptionPane.showConfirmDialog(
+                    this,
+                    "Book: " + borrowedBook.getName() +
+                    "\nAuthor: " + borrowedBook.getAuthor() +
+                    "\nPatron: " + selectedPatron.getName() +
+                    "\n\nConfirm return?",
+                    "Check In",
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.QUESTION_MESSAGE
             );
 
-            if (typedName == null) {
-                return;
-            }
-
-            if (!typedName.equalsIgnoreCase(borrowedBook.getName())) {
-                JOptionPane.showMessageDialog(this, "Book name does not match.");
+            if (confirm != JOptionPane.YES_OPTION) {
                 return;
             }
 
@@ -862,9 +1155,146 @@ public class AdminScreen extends JFrame {
 
             refreshTable();
             refreshTablePatron();
+            saveData();
         });
 
-        loansPanel.add(checkoutButton);
-        loansPanel.add(checkinButton);
+        JButton currentLoansButton = new JButton("Current Loans");
+        JButton overdueLoansButton = new JButton("Overdue Loans");
+        currentLoansButton.addActionListener(e -> {
+
+            if (loanList.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "There are no active loans.");
+                return;
+            }
+
+            String[] columns = {
+                "Book",
+                "Patron",
+                "Borrowed",
+                "Due"
+            };
+
+            Object[][] data = new Object[loanList.size()][4];
+
+            for (int i = 0; i < loanList.size(); i++) {
+                Loan loan = loanList.get(i);
+
+                String patronName = "";
+
+                for (Patron patron : patronlist) {
+                    if (patron.getBorrowedBooks().contains(loan.getBook())) {
+                        patronName = patron.getName();
+                        break;
+                    }
+                }
+
+                data[i][0] = loan.getBook().getName();
+                data[i][1] = patronName;
+                data[i][2] = loan.getCheckOutdate();
+                data[i][3] = loan.getDuedate();
+            }
+
+            JTable table = new JTable(data, columns);
+            JScrollPane scrollPane2 = new JScrollPane(table);
+            scrollPane2.setPreferredSize(new Dimension(800, 300));
+
+            JOptionPane.showMessageDialog(
+                this,
+                scrollPane2,
+                "Currently Checked-Out Books",
+                JOptionPane.INFORMATION_MESSAGE
+            );
+        });
+
+        overdueLoansButton.addActionListener(e -> {
+
+            ArrayList<Object[]> overdueRows = new ArrayList<>();
+
+            LocalDate today = LocalDate.now();
+
+            for (Loan loan : loanList) {
+
+                if (today.isAfter(loan.getDuedate())) {
+
+                    Patron loanPatron = null;
+
+                    for (Patron patron : patronlist) {
+                        if (patron.getBorrowedBooks().contains(loan.getBook())) {
+                            loanPatron = patron;
+                            break;
+                        }
+                    }
+
+                    if (loanPatron != null) {
+                        long overdueDays =
+                            java.time.temporal.ChronoUnit.DAYS.between(
+                                loan.getDuedate(),
+                                today
+                            );
+
+                        overdueRows.add(new Object[] {
+                            loan.getBook().getName(),
+                            loanPatron.getName(),
+                            loanPatron.getContact(),
+                            loan.getDuedate(),
+                            overdueDays
+                        });
+                    }
+                }
+            }
+
+            if (overdueRows.isEmpty()) {
+                JOptionPane.showMessageDialog(
+                    this,
+                    "There are no overdue loans."
+                );
+                return;
+            }
+
+            String[] columns = {
+                "Book",
+                "Patron",
+                "Contact",
+                "Due",
+                "Overdue Days"
+            };
+
+            Object[][] data = new Object[overdueRows.size()][5];
+
+            for (int i = 0; i < overdueRows.size(); i++) {
+                data[i] = overdueRows.get(i);
+            }
+
+            JTable table = new JTable(data, columns);
+            JScrollPane scrollPane3 = new JScrollPane(table);
+            scrollPane3.setPreferredSize(new Dimension(900, 300));
+
+            JOptionPane.showMessageDialog(
+                this,
+                scrollPane3,
+                "Overdue Loans",
+                JOptionPane.INFORMATION_MESSAGE
+            );
+        });
+
+        JPanel loanButtonsPanel = createSidePanel("Loan Options");
+        loanButtonsPanel.add(checkoutButton);
+        loanButtonsPanel.add(checkinButton);
+        loanButtonsPanel.add(currentLoansButton);
+        loanButtonsPanel.add(overdueLoansButton);
+
+        JLabel loanTitle = new JLabel("Loan Management", SwingConstants.CENTER);
+        loanTitle.setFont(new Font("SansSerif", Font.BOLD, 22));
+
+        loansPanel.add(loanTitle, BorderLayout.NORTH);
+        loansPanel.add(loanButtonsPanel, BorderLayout.WEST);
+
+        loadData();
     }
 }
+
+
+
+
+
+

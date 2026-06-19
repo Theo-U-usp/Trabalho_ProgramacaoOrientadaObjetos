@@ -1,4 +1,8 @@
-public class Book{
+import java.io.Serializable;
+
+
+
+public class Book implements Serializable{
 
 
 
@@ -71,6 +75,8 @@ public class Book{
         copies += quant;
     }
 
-
+    public String toString() {
+        return getName() + " - " + getAuthor();
+    }
 
 }
