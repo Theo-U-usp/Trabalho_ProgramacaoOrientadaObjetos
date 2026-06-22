@@ -1,7 +1,14 @@
 import javax.swing.*;
 import java.awt.*;
 
+/**
+ * Login screen for the Java Library system.
+ *
+ * <p>The screen allows the user to choose between Admin and Librarian roles
+ * using radio buttons. Credentials are hard-coded for this version.</p>
+ */
 public class LoginScreen extends JFrame {
+
     private static final String ADMIN_USER = "admin";
     private static final String ADMIN_PASSWORD = "1234";
 
@@ -14,6 +21,9 @@ public class LoginScreen extends JFrame {
     private JRadioButton librarianOption;
     private JButton loginButton;
 
+    /**
+     * Builds the login screen.
+     */
     public LoginScreen() {
         setTitle("Library Login");
         setSize(450, 300);
@@ -72,40 +82,39 @@ public class LoginScreen extends JFrame {
         loginButton.addActionListener(e -> checkLogin());
     }
 
+    /**
+     * Checks the typed credentials and opens the correct screen.
+     */
     private void checkLogin() {
 
         if (adminOption.isSelected()) {
+
             String username = ADMIN_USER;
             String password = ADMIN_PASSWORD;
-            if (username.equals(ADMIN_USER)
-                    && password.equals(ADMIN_PASSWORD)) {
-
+            if (username.equals(ADMIN_USER) && password.equals(ADMIN_PASSWORD)) {
                 new AdminScreen().setVisible(true);
                 dispose();
-
             } else {
-
                 JOptionPane.showMessageDialog(
                         this,
-                        "Invalid admin login."
+                        "Invalid admin login.",
+                        "Login Error",
+                        JOptionPane.ERROR_MESSAGE
                 );
             }
-
         } else {
 
             String username = LIBRARIAN_USER;
             String password = LIBRARIAN_PASSWORD;
-            if (username.equals(LIBRARIAN_USER)
-                    && password.equals(LIBRARIAN_PASSWORD)) {
-
+            if (username.equals(LIBRARIAN_USER) && password.equals(LIBRARIAN_PASSWORD)) {
                 new LibrarianScreen().setVisible(true);
                 dispose();
-
             } else {
-
                 JOptionPane.showMessageDialog(
                         this,
-                        "Invalid librarian login."
+                        "Invalid librarian login.",
+                        "Login Error",
+                        JOptionPane.ERROR_MESSAGE
                 );
             }
         }

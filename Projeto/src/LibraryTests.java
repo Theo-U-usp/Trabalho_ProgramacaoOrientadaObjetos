@@ -10,46 +10,47 @@ import javax.swing.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
 
-
-
+/**
+ * Unit and simple Swing tests for the Java Library system.
+ */
 public class LibraryTests {
 
     @Test
     public void testCreateBook() {
-        Book book = new Book("Dom Casmurro", "Machado de Assis", 1899, 123, "Fiction", 5);
+        Book book = new Book("Dom Casmurro", "Machado de Assis", 1899, "123", "Fiction", 5);
 
         assertEquals("Dom Casmurro", book.getName());
         assertEquals("Machado de Assis", book.getAuthor());
         assertEquals(1899, book.getyear());
-        assertEquals(123, book.getISBN());
+        assertEquals("123", book.getISBN());
         assertEquals("Fiction", book.getgenre());
         assertEquals(5, book.getcopies());
     }
 
     @Test
     public void testEditBookString() {
-        Book book = new Book("Old", "Old Author", 2000, 1, "Fiction", 3);
+        Book book = new Book("Old", "Old Author", 2000, "1", "Fiction", 3);
         BookManagement manager = new BookManagement();
 
         manager.EditString(book, "Name", "New Name");
         manager.EditString(book, "Author", "New Author");
         manager.EditString(book, "Genre", "Fantasy");
+        manager.EditString(book, "ISBN", "999");
 
         assertEquals("New Name", book.getName());
         assertEquals("New Author", book.getAuthor());
         assertEquals("Fantasy", book.getgenre());
+        assertEquals("999", book.getISBN());
     }
 
     @Test
-    public void testEditBookInt() {
-        Book book = new Book("Book", "Author", 2000, 1, "Fiction", 3);
+    public void testEditBookIntFields() {
+        Book book = new Book("Book", "Author", 2000, "1", "Fiction", 3);
         BookManagement manager = new BookManagement();
 
-        manager.EditInt(book, "ISBN", 999);
         manager.EditInt(book, "Year", 2020);
         manager.EditInt(book, "Copies", 10);
 
-        assertEquals(999, book.getISBN());
         assertEquals(2020, book.getyear());
         assertEquals(10, book.getcopies());
     }
@@ -57,7 +58,7 @@ public class LibraryTests {
     @Test
     public void testAddBook() {
         ArrayList<Book> books = new ArrayList<>();
-        Book book = new Book("Book", "Author", 2000, 1, "Fiction", 3);
+        Book book = new Book("Book", "Author", 2000, "1", "Fiction", 3);
         BookManagement manager = new BookManagement();
 
         manager.AddBook(books, book);
@@ -67,9 +68,24 @@ public class LibraryTests {
     }
 
     @Test
+    public void testAddBookWithSameNameAddsCopies() {
+        ArrayList<Book> books = new ArrayList<>();
+        BookManagement manager = new BookManagement();
+
+        Book book1 = new Book("Book", "Author", 2000, "1", "Fiction", 3);
+        Book book2 = new Book("Book", "Author", 2000, "2", "Fiction", 4);
+
+        manager.AddBook(books, book1);
+        manager.AddBook(books, book2);
+
+        assertEquals(1, books.size());
+        assertEquals(7, books.get(0).getcopies());
+    }
+
+    @Test
     public void testDeleteBook() {
         ArrayList<Book> books = new ArrayList<>();
-        Book book = new Book("Book", "Author", 2000, 1, "Fiction", 3);
+        Book book = new Book("Book", "Author", 2000, "1", "Fiction", 3);
         BookManagement manager = new BookManagement();
 
         books.add(book);
@@ -80,21 +96,32 @@ public class LibraryTests {
     }
 
     @Test
+    public void testIsbnValidation() {
+        BookManagement manager = new BookManagement();
+
+        assertTrue(manager.isValidISBN("123456"));
+        assertFalse(manager.isValidISBN("123A56"));
+        assertFalse(manager.isValidISBN(""));
+        assertFalse(manager.isValidISBN(null));
+    }
+
+    @Test
     public void testIsbnExists() {
         ArrayList<Book> books = new ArrayList<>();
-        Book book = new Book("Book", "Author", 2000, 123, "Fiction", 3);
+        Book book = new Book("Book", "Author", 2000, "123", "Fiction", 3);
         BookManagement manager = new BookManagement();
 
         books.add(book);
 
-        assertTrue(manager.isbnExists(books, 123));
-        assertFalse(manager.isbnExists(books, 999));
+        assertTrue(manager.isbnExists(books, "123"));
+        assertFalse(manager.isbnExists(books, "999"));
+        assertFalse(manager.isbnExists(books, "123", book));
     }
 
     @Test
     public void testSearchBookByName() {
         ArrayList<Book> books = new ArrayList<>();
-        Book book = new Book("Dom Casmurro", "Machado", 1899, 123, "Fiction", 5);
+        Book book = new Book("Dom Casmurro", "Machado", 1899, "123", "Fiction", 5);
         BookManagement manager = new BookManagement();
 
         books.add(book);
@@ -108,7 +135,7 @@ public class LibraryTests {
     @Test
     public void testSearchBookByISBN() {
         ArrayList<Book> books = new ArrayList<>();
-        Book book = new Book("Book", "Author", 2000, 123, "Fiction", 5);
+        Book book = new Book("Book", "Author", 2000, "123", "Fiction", 5);
         BookManagement manager = new BookManagement();
 
         books.add(book);
@@ -120,13 +147,36 @@ public class LibraryTests {
     }
 
     @Test
+    public void testSearchBookByAuthorYearGenreAndNotFound() {
+        BookManagement manager = new BookManagement();
+        ArrayList<Book> books = new ArrayList<>();
+
+        Book book = new Book("Book A", "Author A", 2020, "111", "Fantasy", 3);
+        books.add(book);
+
+        assertEquals(1, manager.Search("AUTHOR", books, "Author A").size());
+        assertEquals(1, manager.Search("YEAR", books, "2020").size());
+        assertEquals(1, manager.Search("GENRE", books, "Fantasy").size());
+        assertTrue(manager.Search("NAME", books, "Unknown").isEmpty());
+        assertTrue(manager.Search("YEAR", books, "abc").isEmpty());
+    }
+
+    @Test
+    public void testBookToStringUsesNameOrReadableText() {
+        Book book = new Book("Book A", "Author A", 2020, "111", "Fiction", 3);
+
+        assertNotNull(book.toString());
+        assertTrue(book.toString().contains("Book A"));
+    }
+
+    @Test
     public void testCreatePatron() {
         ArrayList<Book> borrowedBooks = new ArrayList<>();
         ArrayList<Loan> history = new ArrayList<>();
 
         Patron patron = new Patron(
                 "Joao",
-                1,
+                "1",
                 "joao@email.com",
                 borrowedBooks,
                 0,
@@ -135,7 +185,7 @@ public class LibraryTests {
         );
 
         assertEquals("Joao", patron.getName());
-        assertEquals(1, patron.getID());
+        assertEquals("1", patron.getID());
         assertEquals("joao@email.com", patron.getContact());
         assertEquals(0, patron.getHaveBook());
         assertEquals(0, patron.getTotalFine(), 0.001);
@@ -144,10 +194,8 @@ public class LibraryTests {
     @Test
     public void testAddPatron() {
         ArrayList<Patron> patrons = new ArrayList<>();
-        ArrayList<Book> borrowedBooks = new ArrayList<>();
-        ArrayList<Loan> history = new ArrayList<>();
-
-        Patron patron = new Patron("Joao", 1, "joao@email.com", borrowedBooks, 0, 0, history);
+        Patron patron = new Patron("Joao", "1", "joao@email.com",
+                new ArrayList<Book>(), 0, 0, new ArrayList<Loan>());
         PatronManagement manager = new PatronManagement();
 
         manager.AddPatron(patrons, patron);
@@ -157,12 +205,27 @@ public class LibraryTests {
     }
 
     @Test
+    public void testAddPatronWithSameIdDoesNotDuplicate() {
+        ArrayList<Patron> patrons = new ArrayList<>();
+        PatronManagement manager = new PatronManagement();
+
+        Patron patron1 = new Patron("Joao", "1", "joao@email.com",
+                new ArrayList<Book>(), 0, 0, new ArrayList<Loan>());
+        Patron patron2 = new Patron("Maria", "1", "maria@email.com",
+                new ArrayList<Book>(), 0, 0, new ArrayList<Loan>());
+
+        manager.AddPatron(patrons, patron1);
+        manager.AddPatron(patrons, patron2);
+
+        assertEquals(1, patrons.size());
+        assertEquals("Joao", patrons.get(0).getName());
+    }
+
+    @Test
     public void testDeletePatron() {
         ArrayList<Patron> patrons = new ArrayList<>();
-        ArrayList<Book> borrowedBooks = new ArrayList<>();
-        ArrayList<Loan> history = new ArrayList<>();
-
-        Patron patron = new Patron("Joao", 1, "joao@email.com", borrowedBooks, 0, 0, history);
+        Patron patron = new Patron("Joao", "1", "joao@email.com",
+                new ArrayList<Book>(), 0, 0, new ArrayList<Loan>());
         PatronManagement manager = new PatronManagement();
 
         patrons.add(patron);
@@ -173,51 +236,102 @@ public class LibraryTests {
     }
 
     @Test
+    public void testPatronIdValidation() {
+        PatronManagement manager = new PatronManagement();
+
+        assertTrue(manager.isValidPatronID("123456"));
+        assertFalse(manager.isValidPatronID("123A56"));
+        assertFalse(manager.isValidPatronID(""));
+        assertFalse(manager.isValidPatronID(null));
+    }
+
+    @Test
     public void testIdExists() {
         ArrayList<Patron> patrons = new ArrayList<>();
-        ArrayList<Book> borrowedBooks = new ArrayList<>();
-        ArrayList<Loan> history = new ArrayList<>();
-
-        Patron patron = new Patron("Joao", 10, "joao@email.com", borrowedBooks, 0, 0, history);
+        Patron patron = new Patron("Joao", "10", "joao@email.com",
+                new ArrayList<Book>(), 0, 0, new ArrayList<Loan>());
         PatronManagement manager = new PatronManagement();
 
         patrons.add(patron);
 
-        assertTrue(manager.idExists(patrons, 10));
-        assertFalse(manager.idExists(patrons, 99));
+        assertTrue(manager.idExists(patrons, "10"));
+        assertFalse(manager.idExists(patrons, "99"));
+        assertFalse(manager.idExists(patrons, "10", patron));
     }
 
     @Test
     public void testEditPatronString() {
-        ArrayList<Book> borrowedBooks = new ArrayList<>();
-        ArrayList<Loan> history = new ArrayList<>();
-
-        Patron patron = new Patron("Old", 1, "old@email.com", borrowedBooks, 0, 0, history);
+        Patron patron = new Patron("Old", "1", "old@email.com",
+                new ArrayList<Book>(), 0, 0, new ArrayList<Loan>());
         PatronManagement manager = new PatronManagement();
 
         manager.EditString(patron, "Name", "New Name");
         manager.EditString(patron, "Contact", "new@email.com");
+        manager.EditString(patron, "ID", "99");
 
         assertEquals("New Name", patron.getName());
         assertEquals("new@email.com", patron.getContact());
+        assertEquals("99", patron.getID());
     }
 
     @Test
-    public void testEditPatronInt() {
-        ArrayList<Book> borrowedBooks = new ArrayList<>();
-        ArrayList<Loan> history = new ArrayList<>();
-
-        Patron patron = new Patron("Joao", 1, "joao@email.com", borrowedBooks, 0, 0, history);
+    public void testSearchPatronByNameIdAndNotFound() {
         PatronManagement manager = new PatronManagement();
+        ArrayList<Patron> patrons = new ArrayList<>();
 
-        manager.EditInt(patron, "ID", 99);
+        Patron patron = new Patron("Joao", "10", "joao@email.com",
+                new ArrayList<Book>(), 0, 0, new ArrayList<Loan>());
 
-        assertEquals(99, patron.getID());
+        patrons.add(patron);
+
+        assertEquals(1, manager.Search("NAME", patrons, "Joao").size());
+        assertEquals(1, manager.Search("ID", patrons, "10").size());
+        assertTrue(manager.Search("NAME", patrons, "Maria").isEmpty());
+    }
+
+    @Test
+    public void testPatronHaveBookAndFine() {
+        Patron patron = new Patron("Joao", "1", "joao@email.com",
+                new ArrayList<Book>(), 0, 0, new ArrayList<Loan>());
+
+        patron.setHaveBook(1);
+        patron.setTotalFine(12.5f);
+
+        assertEquals(1, patron.getHaveBook());
+        assertEquals(12.5f, patron.getTotalFine(), 0.01f);
+    }
+
+    @Test
+    public void testPatronToStringUsesNameOrReadableText() {
+        Patron patron = new Patron("Joao", "1", "joao@email.com",
+                new ArrayList<Book>(), 0, 0, new ArrayList<Loan>());
+
+        assertNotNull(patron.toString());
+        assertTrue(patron.toString().contains("Joao"));
+    }
+
+    @Test
+    public void testAddLoanToHistory() {
+        Book book = new Book("Book A", "Author A", 2020, "111", "Fiction", 3);
+
+        Loan loan = new Loan(
+                book,
+                LocalDate.of(2026, 6, 1),
+                LocalDate.of(2026, 6, 15)
+        );
+
+        Patron patron = new Patron("Joao", "1", "joao@email.com",
+                new ArrayList<Book>(), 0, 0, new ArrayList<Loan>());
+
+        patron.addLoanToHistory(loan);
+
+        assertEquals(1, patron.getHistory().size());
+        assertEquals(loan, patron.getHistory().get(0));
     }
 
     @Test
     public void testLoanCreation() {
-        Book book = new Book("Book", "Author", 2020, 123, "Fiction", 3);
+        Book book = new Book("Book", "Author", 2020, "123", "Fiction", 3);
 
         LocalDate checkout = LocalDate.of(2026, 6, 1);
         LocalDate due = LocalDate.of(2026, 6, 15);
@@ -233,7 +347,7 @@ public class LibraryTests {
 
     @Test
     public void testLoanNotOverdue() {
-        Book book = new Book("Book", "Author", 2020, 123, "Fiction", 3);
+        Book book = new Book("Book", "Author", 2020, "123", "Fiction", 3);
 
         Loan loan = new Loan(
                 book,
@@ -251,7 +365,7 @@ public class LibraryTests {
 
     @Test
     public void testLoanOverdue() {
-        Book book = new Book("Book", "Author", 2020, 123, "Fiction", 3);
+        Book book = new Book("Book", "Author", 2020, "123", "Fiction", 3);
 
         Loan loan = new Loan(
                 book,
@@ -268,13 +382,29 @@ public class LibraryTests {
     }
 
     @Test
+    public void testLoanFineAndReturnDate() {
+        Book book = new Book("Book A", "Author A", 2020, "111", "Fiction", 3);
+
+        Loan loan = new Loan(
+                book,
+                LocalDate.of(2026, 6, 1),
+                LocalDate.of(2026, 6, 15)
+        );
+
+        LocalDate returnDate = LocalDate.of(2026, 6, 20);
+
+        loan.setReturnDate(returnDate);
+        loan.setFine(6.0f);
+
+        assertEquals(returnDate, loan.getReturnDate());
+        assertEquals(6.0f, loan.getFine(), 0.01f);
+    }
+
+    @Test
     public void testCheckOutLogicManually() {
-        Book book = new Book("Book", "Author", 2020, 123, "Fiction", 2);
-
-        ArrayList<Book> borrowedBooks = new ArrayList<>();
-        ArrayList<Loan> history = new ArrayList<>();
-
-        Patron patron = new Patron("Joao", 1, "joao@email.com", borrowedBooks, 0, 0, history);
+        Book book = new Book("Book", "Author", 2020, "123", "Fiction", 2);
+        Patron patron = new Patron("Joao", "1", "joao@email.com",
+                new ArrayList<Book>(), 0, 0, new ArrayList<Loan>());
 
         LocalDate checkout = LocalDate.of(2026, 6, 1);
         LocalDate due = checkout.plusDays(14);
@@ -294,12 +424,9 @@ public class LibraryTests {
 
     @Test
     public void testCheckInLogicManually() {
-        Book book = new Book("Book", "Author", 2020, 123, "Fiction", 1);
-
-        ArrayList<Book> borrowedBooks = new ArrayList<>();
-        ArrayList<Loan> history = new ArrayList<>();
-
-        Patron patron = new Patron("Joao", 1, "joao@email.com", borrowedBooks, 1, 0, history);
+        Book book = new Book("Book", "Author", 2020, "123", "Fiction", 1);
+        Patron patron = new Patron("Joao", "1", "joao@email.com",
+                new ArrayList<Book>(), 1, 0, new ArrayList<Loan>());
 
         LocalDate checkout = LocalDate.of(2026, 6, 1);
         LocalDate due = LocalDate.of(2026, 6, 15);
@@ -324,196 +451,36 @@ public class LibraryTests {
         book.setCopies(book.getcopies() + 1);
 
         assertEquals(5, overdueDays);
-        assertEquals(6.0f, patron.getTotalFine(), 0.01);
+        assertEquals(6.0f, patron.getTotalFine(), 0.01f);
         assertEquals(0, patron.getHaveBook());
         assertTrue(patron.getBorrowedBooks().isEmpty());
         assertEquals(2, book.getcopies());
         assertEquals(checkin, loan.getReturnDate());
     }
-      @Test
-    public void testSearchBookByAuthor() {
-        BookManagement manager = new BookManagement();
-        ArrayList<Book> books = new ArrayList<>();
-
-        Book book = new Book("Book A", "Author A", 2020, 111, "Fiction", 3);
-        books.add(book);
-
-        ArrayList<Book> result = manager.Search("AUTHOR", books, "Author A");
-
-        assertEquals(1, result.size());
-        assertEquals(book, result.get(0));
-    }
 
     @Test
-    public void testSearchBookByYear() {
-        BookManagement manager = new BookManagement();
+    public void testLibraryDataStoresLists() {
         ArrayList<Book> books = new ArrayList<>();
-
-        Book book = new Book("Book A", "Author A", 2020, 111, "Fiction", 3);
-        books.add(book);
-
-        ArrayList<Book> result = manager.Search("YEAR", books, "2020");
-
-        assertEquals(1, result.size());
-        assertEquals(book, result.get(0));
-    }
-
-    @Test
-    public void testSearchBookByGenre() {
-        BookManagement manager = new BookManagement();
-        ArrayList<Book> books = new ArrayList<>();
-
-        Book book = new Book("Book A", "Author A", 2020, 111, "Fantasy", 3);
-        books.add(book);
-
-        ArrayList<Book> result = manager.Search("GENRE", books, "Fantasy");
-
-        assertEquals(1, result.size());
-        assertEquals(book, result.get(0));
-    }
-
-    @Test
-    public void testSearchBookNotFound() {
-        BookManagement manager = new BookManagement();
-        ArrayList<Book> books = new ArrayList<>();
-
-        books.add(new Book("Book A", "Author A", 2020, 111, "Fiction", 3));
-
-        ArrayList<Book> result = manager.Search("NAME", books, "Unknown");
-
-        assertTrue(result.isEmpty());
-    }
-
-    @Test
-    public void testSearchPatronByName() {
-        PatronManagement manager = new PatronManagement();
         ArrayList<Patron> patrons = new ArrayList<>();
+        ArrayList<Loan> loans = new ArrayList<>();
 
-        Patron patron = new Patron(
-                "Joao",
-                1,
-                "joao@email.com",
-                new ArrayList<Book>(),
-                0,
-                0,
-                new ArrayList<Loan>()
-        );
+        Book book = new Book("Book", "Author", 2020, "123", "Fiction", 1);
+        Patron patron = new Patron("Joao", "1", "joao@email.com",
+                new ArrayList<Book>(), 0, 0, new ArrayList<Loan>());
+        Loan loan = new Loan(book, LocalDate.of(2026, 6, 1), LocalDate.of(2026, 6, 15));
 
+        books.add(book);
         patrons.add(patron);
+        loans.add(loan);
 
-        ArrayList<Patron> result = manager.Search("NAME", patrons, "Joao");
+        LibraryData data = new LibraryData(books, patrons, loans);
 
-        assertEquals(1, result.size());
-        assertEquals(patron, result.get(0));
+        assertEquals(1, data.books.size());
+        assertEquals(1, data.patrons.size());
+        assertEquals(1, data.loans.size());
     }
 
     @Test
-    public void testSearchPatronByID() {
-        PatronManagement manager = new PatronManagement();
-        ArrayList<Patron> patrons = new ArrayList<>();
-
-        Patron patron = new Patron(
-                "Joao",
-                10,
-                "joao@email.com",
-                new ArrayList<Book>(),
-                0,
-                0,
-                new ArrayList<Loan>()
-        );
-
-        patrons.add(patron);
-
-        ArrayList<Patron> result = manager.Search("ID", patrons, "10");
-
-        assertEquals(1, result.size());
-        assertEquals(patron, result.get(0));
-    }
-
-    @Test
-    public void testSearchPatronNotFound() {
-        PatronManagement manager = new PatronManagement();
-        ArrayList<Patron> patrons = new ArrayList<>();
-
-        patrons.add(new Patron(
-                "Joao",
-                10,
-                "joao@email.com",
-                new ArrayList<Book>(),
-                0,
-                0,
-                new ArrayList<Loan>()
-        ));
-
-        ArrayList<Patron> result = manager.Search("NAME", patrons, "Maria");
-
-        assertTrue(result.isEmpty());
-    }
-
-    @Test
-    public void testPatronHaveBookAndFine() {
-        Patron patron = new Patron(
-                "Joao",
-                1,
-                "joao@email.com",
-                new ArrayList<Book>(),
-                0,
-                0,
-                new ArrayList<Loan>()
-        );
-
-        patron.setHaveBook(1);
-        patron.setTotalFine(12.5f);
-
-        assertEquals(1, patron.getHaveBook());
-        assertEquals(12.5f, patron.getTotalFine(), 0.01f);
-    }
-
-    @Test
-    public void testAddLoanToHistory() {
-        Book book = new Book("Book A", "Author A", 2020, 111, "Fiction", 3);
-
-        Loan loan = new Loan(
-                book,
-                LocalDate.of(2026, 6, 1),
-                LocalDate.of(2026, 6, 15)
-        );
-
-        Patron patron = new Patron(
-                "Joao",
-                1,
-                "joao@email.com",
-                new ArrayList<Book>(),
-                0,
-                0,
-                new ArrayList<Loan>()
-        );
-
-        patron.addLoanToHistory(loan);
-
-        assertEquals(1, patron.getHistory().size());
-        assertEquals(loan, patron.getHistory().get(0));
-    }
-
-    @Test
-    public void testLoanFineAndReturnDate() {
-        Book book = new Book("Book A", "Author A", 2020, 111, "Fiction", 3);
-
-        Loan loan = new Loan(
-                book,
-                LocalDate.of(2026, 6, 1),
-                LocalDate.of(2026, 6, 15)
-        );
-
-        LocalDate returnDate = LocalDate.of(2026, 6, 20);
-
-        loan.setReturnDate(returnDate);
-        loan.setFine(6.0f);
-
-        assertEquals(returnDate, loan.getReturnDate());
-        assertEquals(6.0f, loan.getFine(), 0.01f);
-    }
-     @Test
     public void testLoginScreenOpens() throws Exception {
         Assume.assumeFalse(GraphicsEnvironment.isHeadless());
 
@@ -554,7 +521,8 @@ public class LibraryTests {
             screen.dispose();
         });
     }
-     private JButton findButton(Container container, String text) {
+
+    private JButton findButton(Container container, String text) {
         for (Component component : container.getComponents()) {
             if (component instanceof JButton) {
                 JButton button = (JButton) component;
@@ -587,8 +555,7 @@ public class LibraryTests {
             }
 
             if (component instanceof Container) {
-                JRadioButton found =
-                        findRadioButton((Container) component, text);
+                JRadioButton found = findRadioButton((Container) component, text);
 
                 if (found != null) {
                     return found;

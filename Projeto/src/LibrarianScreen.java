@@ -13,6 +13,18 @@ import java.io.ObjectOutputStream;
 import java.time.LocalDate;
 import java.util.ArrayList;
 
+/**
+ * Librarian screen of the Java Library system.
+ *
+ * <p>This JFrame allows librarians to view and search books and patrons,
+ * view patron history, perform checkout/checkin operations and generate
+ * current or overdue loan reports. It uses the same {@code library.dat}
+ * file as AdminScreen.</p>
+ *
+ * <p>Librarians cannot add, edit or delete books and patrons. ISBN and patron
+ * ID are treated as Strings, and their validation is delegated to
+ * {@link BookManagement} and {@link PatronManagement}.</p>
+ */
 public class LibrarianScreen extends JFrame {
 
     private static final String DATA_FILE = "library.dat";
@@ -42,6 +54,9 @@ public class LibrarianScreen extends JFrame {
 
     ArrayList<Loan> loanList = new ArrayList<>();
 
+    /**
+     * Refreshes the books table.
+     */
     private void refreshTable() {
         tableModel.setRowCount(0);
 
@@ -57,6 +72,9 @@ public class LibrarianScreen extends JFrame {
         }
     }
 
+    /**
+     * Refreshes the patrons table.
+     */
     private void refreshTablePatron() {
         tableModelpatron.setRowCount(0);
 
@@ -71,18 +89,15 @@ public class LibrarianScreen extends JFrame {
         }
     }
 
+    /**
+     * Saves books, patrons and active loans to the shared data file.
+     */
     private void saveData() {
         try {
-            LibraryData data = new LibraryData(
-                    booklist,
-                    patronlist,
-                    loanList
-            );
+            LibraryData data = new LibraryData(booklist, patronlist, loanList);
 
             ObjectOutputStream output =
-                    new ObjectOutputStream(
-                            new FileOutputStream(DATA_FILE)
-                    );
+                    new ObjectOutputStream(new FileOutputStream(DATA_FILE));
 
             output.writeObject(data);
             output.close();
@@ -97,12 +112,13 @@ public class LibrarianScreen extends JFrame {
         }
     }
 
+    /**
+     * Loads books, patrons and active loans from the shared data file.
+     */
     private void loadData() {
         try {
             ObjectInputStream input =
-                    new ObjectInputStream(
-                            new FileInputStream(DATA_FILE)
-                    );
+                    new ObjectInputStream(new FileInputStream(DATA_FILE));
 
             LibraryData data = (LibraryData) input.readObject();
             input.close();
@@ -136,6 +152,11 @@ public class LibrarianScreen extends JFrame {
         }
     }
 
+    /**
+     * Applies visual configuration to a JTable.
+     *
+     * @param table table to configure
+     */
     private void configureTable(JTable table) {
         table.setRowHeight(28);
         table.setFillsViewportHeight(true);
@@ -143,18 +164,43 @@ public class LibrarianScreen extends JFrame {
         table.getTableHeader().setFont(new Font("SansSerif", Font.BOLD, 13));
     }
 
+    /**
+     * Creates a titled side panel.
+     *
+     * @param title panel title
+     * @return configured side panel
+     */
     private JPanel createSidePanel(String title) {
         JPanel panel = new JPanel(new GridLayout(0, 1, 10, 10));
         panel.setBorder(BorderFactory.createTitledBorder(title));
         return panel;
     }
 
+    /**
+     * Creates a titled search panel.
+     *
+     * @param title panel title
+     * @return configured search panel
+     */
     private JPanel createSearchPanel(String title) {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 8));
         panel.setBorder(BorderFactory.createTitledBorder(title));
         return panel;
     }
 
+    /**
+     * Checks if a text input is null or empty.
+     *
+     * @param value text to check
+     * @return true if the text is null or empty
+     */
+    private boolean isEmptyInput(String value) {
+        return value == null || value.trim().isEmpty();
+    }
+
+    /**
+     * Builds the librarian interface and initializes search/history/loan actions.
+     */
     public LibrarianScreen() {
         setTitle("Java Library - Librarian");
         setSize(1200, 750);
@@ -163,13 +209,10 @@ public class LibrarianScreen extends JFrame {
         setLocationRelativeTo(null);
 
         JMenuBar menuBar = new JMenuBar();
-
         JMenu accountMenu = new JMenu("Account");
-
         JMenuItem logoutItem = new JMenuItem("Logout");
 
         logoutItem.addActionListener(e -> {
-
             int option = JOptionPane.showConfirmDialog(
                     this,
                     "Do you want to logout?",
@@ -185,7 +228,6 @@ public class LibrarianScreen extends JFrame {
 
         accountMenu.add(logoutItem);
         menuBar.add(accountMenu);
-
         setJMenuBar(menuBar);
 
         JTabbedPane tabs = new JTabbedPane();
@@ -207,10 +249,6 @@ public class LibrarianScreen extends JFrame {
 
         BookManagement bookManagement = new BookManagement();
         PatronManagement patronManagement = new PatronManagement();
-
-        // =========================
-        // Books tab - view/search only
-        // =========================
 
         JTable booksTable = new JTable(tableModel);
         configureTable(booksTable);
@@ -268,7 +306,7 @@ public class LibrarianScreen extends JFrame {
 
             String value = searchField.getText();
 
-            if (value == null || value.trim().isEmpty()) {
+            if (isEmptyInput(value)) {
                 JOptionPane.showMessageDialog(
                         this,
                         "Search field cannot be empty.",
@@ -278,13 +316,23 @@ public class LibrarianScreen extends JFrame {
                 return;
             }
 
-            if (ISBNButton.isSelected() || yearButton.isSelected()) {
+            if (ISBNButton.isSelected() && !bookManagement.isValidISBN(value.trim())) {
+                JOptionPane.showMessageDialog(
+                        this,
+                        "ISBN must contain only numeric digits.",
+                        "Search Error",
+                        JOptionPane.ERROR_MESSAGE
+                );
+                return;
+            }
+
+            if (yearButton.isSelected()) {
                 try {
                     Integer.parseInt(value);
                 } catch (NumberFormatException ex) {
                     JOptionPane.showMessageDialog(
                             this,
-                            "Search value must be an integer.",
+                            "Year must be an integer.",
                             "Search Error",
                             JOptionPane.ERROR_MESSAGE
                     );
@@ -292,7 +340,7 @@ public class LibrarianScreen extends JFrame {
                 }
             }
 
-            ArrayList<Book> result = bookManagement.Search(command, booklist, value);
+            ArrayList<Book> result = bookManagement.Search(command, booklist, value.trim());
 
             if (result.isEmpty()) {
                 JOptionPane.showMessageDialog(
@@ -323,10 +371,6 @@ public class LibrarianScreen extends JFrame {
             refreshTable();
         });
 
-        // =========================
-        // Patrons tab - view/search/history only
-        // =========================
-
         JTable patronsTable = new JTable(tableModelpatron);
         configureTable(patronsTable);
         patronsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -351,13 +395,7 @@ public class LibrarianScreen extends JFrame {
 
             Patron selectedPatron = patronlist.get(selectedRowPatron);
 
-            String[] historyColumns = {
-                "Book",
-                "Borrowed",
-                "Due",
-                "Returned",
-                "Fine"
-            };
+            String[] historyColumns = {"Book", "Borrowed", "Due", "Returned", "Fine"};
 
             ArrayList<Loan> history = selectedPatron.getHistory();
 
@@ -427,7 +465,7 @@ public class LibrarianScreen extends JFrame {
 
             String value = searchFieldPatron.getText();
 
-            if (value == null || value.trim().isEmpty()) {
+            if (isEmptyInput(value)) {
                 JOptionPane.showMessageDialog(
                         this,
                         "Search field cannot be empty.",
@@ -437,21 +475,17 @@ public class LibrarianScreen extends JFrame {
                 return;
             }
 
-            if (IDButtonPatron.isSelected()) {
-                try {
-                    Integer.parseInt(value);
-                } catch (NumberFormatException ex) {
-                    JOptionPane.showMessageDialog(
-                            this,
-                            "ID must be an integer.",
-                            "Search Error",
-                            JOptionPane.ERROR_MESSAGE
-                    );
-                    return;
-                }
+            if (IDButtonPatron.isSelected() && !patronManagement.isValidPatronID(value.trim())) {
+                JOptionPane.showMessageDialog(
+                        this,
+                        "ID must contain only numeric digits.",
+                        "Search Error",
+                        JOptionPane.ERROR_MESSAGE
+                );
+                return;
             }
 
-            ArrayList<Patron> result = patronManagement.Search(command, patronlist, value);
+            ArrayList<Patron> result = patronManagement.Search(command, patronlist, value.trim());
 
             if (result.isEmpty()) {
                 JOptionPane.showMessageDialog(
@@ -480,10 +514,6 @@ public class LibrarianScreen extends JFrame {
             searchFieldPatron.setText("");
             refreshTablePatron();
         });
-
-        // =========================
-        // Loans tab
-        // =========================
 
         checkoutButton = new JButton("Check Out");
         checkinButton = new JButton("Check In");
@@ -645,12 +675,7 @@ public class LibrarianScreen extends JFrame {
                 return;
             }
 
-            String[] columns = {
-                "Book",
-                "Patron",
-                "Borrowed",
-                "Due"
-            };
+            String[] columns = {"Book", "Patron", "Borrowed", "Due"};
 
             Object[][] data = new Object[loanList.size()][4];
 
@@ -728,13 +753,7 @@ public class LibrarianScreen extends JFrame {
                 return;
             }
 
-            String[] columns = {
-                "Book",
-                "Patron",
-                "Contact",
-                "Due",
-                "Overdue Days"
-            };
+            String[] columns = {"Book", "Patron", "Contact", "Due", "Overdue Days"};
 
             Object[][] data = new Object[overdueRows.size()][5];
 
